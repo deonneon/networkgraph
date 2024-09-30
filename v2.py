@@ -5,6 +5,8 @@ import spacy
 # Load the English language model
 nlp = spacy.load("en_core_web_sm")
 
+nlp.max_length = 1100000
+
 
 # Function to extract character relationships from text
 def extract_relationships(text):
@@ -54,12 +56,6 @@ var options = {
     "font": {
       "size": 12
     }
-  },
-  "edges": {
-    "color": {
-      "inherit": true
-    },
-    "smooth": false
   },
   "physics": {
     "barnesHut": {

@@ -2,10 +2,19 @@ import spacy
 import networkx as nx
 from pyvis.network import Network
 from collections import defaultdict
+import community.community_louvain as community_louvain
+import random
+
+
+# Assign random colors to each community in RGB format
+def random_color():
+    return "#{:02x}{:02x}{:02x}".format(
+        random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+    )
+
 
 # Load SpaCy's English NLP model
 nlp = spacy.load("en_core_web_sm")
-
 nlp.max_length = 1100000
 
 # Load the ebook (replace with your Jane Eyre text)
@@ -73,25 +82,24 @@ for character, color in characters.items():
 for (char1, char2), weight in character_interactions.items():
     G.add_edge(char1, char2, weight=weight)
 
-# Calculate node sizes based on degree centrality
-centrality = nx.degree_centrality(G)
-node_sizes = {node: 10 + (centrality[node] * 50) for node in G.nodes()}
+# Apply Louvain community detection
+partition = community_louvain.best_partition(G)
 
-# Create visualization using Pyvis
+# Assign each node to a community and adjust colors
+community_colors = {}
+# Assign each community a random color
+for community_id in set(partition.values()):
+    community_colors[community_id] = random_color()
+
+# Create a graph for Pyvis with communities
 net = Network(
     notebook=True, height="750px", width="100%", bgcolor="#222222", font_color="white"
 )
 
-# Add nodes and edges to the Pyvis graph
-for node in G.nodes(data=True):
-    net.add_node(
-        node[0],
-        label=node[0],
-        color=node[1]["color"],
-        size=node_sizes[node[0]],
-        shadow=False,
-        linewidths=0,
-    )
+# Add nodes with community-based colors
+for node in G.nodes():
+    community_id = partition[node]
+    net.add_node(node, label=node, color=community_colors[community_id])
 
 # Normalize edge weights
 max_weight = max(edge[2]["weight"] for edge in G.edges(data=True))
@@ -99,16 +107,5 @@ for edge in G.edges(data=True):
     normalized_weight = 1 + (edge[2]["weight"] / max_weight) * 10
     net.add_edge(edge[0], edge[1], value=normalized_weight)
 
-# Disable node hover highlighting and focus effect
-net.set_options(
-    """
-var options = {
-  "nodes": {
-    "borderWidth": 0
-  }
-}
-"""
-)
-
 # Generate and show the network graph
-net.show("jane_eyre_relationships.html")
+net.show("jane_eyre_louvain_communities.html")

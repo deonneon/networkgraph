@@ -29,6 +29,7 @@ doc = nlp(text)
 # Dictionary to hold character pair interactions
 character_interactions = defaultdict(int)
 
+
 # Helper function to check if a character is in a sentence
 def find_characters_in_sentence(sentence):
     found_characters = []
@@ -37,10 +38,13 @@ def find_characters_in_sentence(sentence):
             found_characters.append(ent.text)
     return found_characters
 
+
 # Loop through sentences and find interactions between characters
 for sent in doc.sents:
     char_in_sent = find_characters_in_sentence(sent)
-    if len(char_in_sent) > 1:  # More than one character in the sentence indicates interaction
+    if (
+        len(char_in_sent) > 1
+    ):  # More than one character in the sentence indicates interaction
         for i in range(len(char_in_sent)):
             for j in range(i + 1, len(char_in_sent)):
                 pair = tuple(sorted([char_in_sent[i], char_in_sent[j]]))
@@ -59,7 +63,10 @@ for (char1, char2), weight in character_interactions.items():
     G.add_edge(char1, char2, weight=weight)
 
 # Create visualization using Pyvis
-net = Network(notebook=True, height="750px", width="100%", bgcolor="#222222", font_color="white")
+net = Network(
+    notebook=True, height="750px", width="100%", bgcolor="#222222", font_color="white"
+)
+
 
 # Function to map character to color
 def get_color(character):
@@ -68,9 +75,10 @@ def get_color(character):
             return color
     return "gray"
 
+
 # Add nodes with different sizes based on degree of interaction
 for node in G.nodes:
-    size = G.degree[node] * 10  # Node size based on the number of connections
+    size = G.degree[node] * 2  # Node size based on the number of connections
     color = get_color(node)
     net.add_node(node, label=node, color=color, size=size)
 
@@ -78,7 +86,7 @@ for node in G.nodes:
 for edge in G.edges(data=True):
     char1, char2, data = edge
     width = data["weight"] * 2  # Scale edge width by interaction weight
-    net.add_edge(char1, char2, value=width, color="#FFFF00")  # Edges in yellow for consistency
+    net.add_edge(char1, char2, value=width)
 
 # Generate and show the network graph
 net.show("jane_eyre_relationships.html")
